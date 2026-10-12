@@ -1,0 +1,721 @@
+﻿@page "/calendario"
+@rendermode InteractiveServer
+
+<PageTitle>Calendário de Vacinação | VacinAção</PageTitle>
+
+<div class="pagina">
+    <header class="topo">
+        <a href="/painel" class="voltar">← Voltar ao painel</a>
+        <div class="logo">✚ VacinAção</div>
+        <div class="localizacao">📍 Sorocaba, SP</div>
+    </header>
+
+    <main class="conteudo">
+        <section class="cabecalho">
+            <span class="etiqueta">PREVENÇÃO E CUIDADO</span>
+            <h1>Calendário de Vacinação</h1>
+            <p>
+                Consulte o calendário, acompanhe orientações e mantenha
+                suas vacinas em dia.
+            </p>
+        </section>
+
+        <section class="aviso">
+            <span class="aviso-icone">ℹ️</span>
+            <div>
+                <strong>Informação importante</strong>
+                <p>
+                    As vacinas indicadas dependem da idade, do histórico
+                    vacinal e das condições de saúde. Confirme a
+                    disponibilidade com uma UBS de Sorocaba.
+                </p>
+            </div>
+        </section>
+
+        <section class="calendario-card">
+            <div class="calendario-topo">
+                <div>
+                    <h2>@MesAno</h2>
+                    <p>Selecione um dia para consultar a orientação.</p>
+                </div>
+
+                <div class="navegacao">
+                    <button type="button"
+                            class="btn-mes"
+                            @onclick="MesAnterior"
+                            aria-label="Mês anterior">
+                        ‹
+                    </button>
+                    <button type="button"
+                            class="btn-hoje"
+                            @onclick="VoltarParaHoje">
+                        Hoje
+                    </button>
+                    <button type="button"
+                            class="btn-mes"
+                            @onclick="ProximoMes"
+                            aria-label="Próximo mês">
+                        ›
+                    </button>
+                </div>
+            </div>
+
+            <div class="dias-semana">
+                @foreach (var dia in diasSemana)
+                {
+                    <div>@dia</div>
+                }
+            </div>
+
+            <div class="grade-calendario">
+                @foreach (var dia in DiasDoCalendario)
+                {
+                    @if (dia == null)
+                    {
+                        <div class="dia-vazio"></div>
+                    }
+                    else
+                    {
+                        var data = dia.Value;
+                        var selecionado = data.Date == dataSelecionada.Date;
+                        var hoje = data.Date == DateTime.Today;
+                        var diaUtil = data.DayOfWeek != DayOfWeek.Saturday
+                            && data.DayOfWeek != DayOfWeek.Sunday;
+
+                        <button type="button"
+                                class="@ClasseDia(data, selecionado, hoje, diaUtil)"
+                                @onclick="() => SelecionarDia(data)"
+                                aria-label="@data.ToString("dd/MM/yyyy")">
+                            <span>@data.Day</span>
+                            @if (diaUtil)
+                            {
+                                <span class="marcador"></span>
+                            }
+                        </button>
+                    }
+                }
+            </div>
+
+            <div class="legenda">
+                <span><i class="ponto rotina"></i> Dia útil — consultar UBS</span>
+                <span><i class="ponto hoje"></i> Data atual</span>
+                <span><i class="ponto escolhido"></i> Data selecionada</span>
+            </div>
+        </section>
+
+        <section class="detalhe-data">
+            <div class="detalhe-icone">📅</div>
+            <div class="detalhe-texto">
+                <span class="etiqueta">DATA SELECIONADA</span>
+                <h2>@dataSelecionada.ToString("dddd, dd 'de' MMMM 'de' yyyy")</h2>
+
+                @if (dataSelecionada.Date < DateTime.Today)
+                {
+                    <p>
+                        Esta data já passou. Você pode consultar orientações
+                        sobre vacinação de rotina, mas não solicitar um
+                        agendamento para este dia.
+                    </p>
+                }
+                else if (EhFimDeSemana(dataSelecionada))
+                {
+                    <p>
+                        É fim de semana. Verifique previamente se existe
+                        alguma campanha especial ou unidade com atendimento.
+                    </p>
+                }
+                else
+                {
+                    <p>
+                        A vacinação de rotina é oferecida nas UBSs de
+                        Sorocaba em dias úteis. Confirme os horários,
+                        a vacina desejada e a disponibilidade diretamente
+                        com a unidade.
+                    </p>
+                }
+            </div>
+        </section>
+
+        <section class="secao-vacinas">
+            <div class="secao-titulo">
+                <span class="etiqueta">INFORMAÇÕES ÚTEIS</span>
+                <h2>Vacinas e orientações</h2>
+                <p>Consulte as recomendações oficiais para sua faixa etária.</p>
+            </div>
+
+            <div class="cards">
+                <article class="vacina-card">
+                    <div class="card-icone azul">🛡️</div>
+                    <h3>Vacinação de rotina</h3>
+                    <p>
+                        As vacinas são indicadas conforme a idade,
+                        as doses anteriores e o Calendário Nacional.
+                    </p>
+                    <a href="https://www.gov.br/saude/pt-br/vacinacao"
+                       target="_blank" rel="noopener noreferrer">
+                        Consultar calendário nacional ↗
+                    </a>
+                </article>
+
+                <article class="vacina-card">
+                    <div class="card-icone verde">🏥</div>
+                    <h3>UBSs de Sorocaba</h3>
+                    <p>
+                        A cidade possui 33 Unidades Básicas de Saúde.
+                        Consulte a unidade de referência e seu atendimento.
+                    </p>
+                    <a href="https://atendimento156.sorocaba.sp.gov.br/portal156/carta-servico/assunto/49BBA1CC-CF4A-E711-8A4C-005056BF74CB/"
+                       target="_blank" rel="noopener noreferrer">
+                        Informações oficiais das UBSs ↗
+                    </a>
+                </article>
+
+                <article class="vacina-card">
+                    <div class="card-icone amarelo">📢</div>
+                    <h3>Campanhas municipais</h3>
+                    <p>
+                        Datas especiais e públicos atendidos podem mudar.
+                        Confira os comunicados mais recentes da Prefeitura.
+                    </p>
+                    <a href="https://noticias.sorocaba.sp.gov.br/"
+                       target="_blank" rel="noopener noreferrer">
+                        Ver notícias da Prefeitura ↗
+                    </a>
+                </article>
+            </div>
+        </section>
+
+        <section class="rodape-aviso">
+            <strong>Antes de ir à unidade</strong>
+            <p>
+                Leve documento de identificação e carteira de vacinação,
+                se disponível. A marcação no calendário desta tela não
+                representa uma vaga reservada nem confirma estoque de vacina.
+            </p>
+        </section>
+    </main>
+</div>
+
+@code {
+    private DateTime mesExibido = new(DateTime.Today.Year, DateTime.Today.Month, 1);
+    private DateTime dataSelecionada = DateTime.Today;
+
+    private readonly string[] diasSemana =
+    {
+        "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"
+    };
+
+    private string MesAno =>
+        mesExibido.ToString("MMMM 'de' yyyy");
+
+    private List<DateTime?> DiasDoCalendario
+    {
+        get
+        {
+            var dias = new List<DateTime?>();
+
+            int deslocamento =
+                ((int)mesExibido.DayOfWeek + 6) % 7;
+
+            for (int i = 0; i < deslocamento; i++)
+            {
+                dias.Add(null);
+            }
+
+            int quantidadeDias =
+                DateTime.DaysInMonth(mesExibido.Year, mesExibido.Month);
+
+            for (int dia = 1; dia <= quantidadeDias; dia++)
+            {
+                dias.Add(new DateTime(
+                    mesExibido.Year,
+                    mesExibido.Month,
+                    dia));
+            }
+
+            while (dias.Count % 7 != 0)
+            {
+                dias.Add(null);
+            }
+
+            return dias;
+        }
+    }
+
+    private void MesAnterior()
+    {
+        mesExibido = mesExibido.AddMonths(-1);
+    }
+
+    private void ProximoMes()
+    {
+        mesExibido = mesExibido.AddMonths(1);
+    }
+
+    private void VoltarParaHoje()
+    {
+        mesExibido = new DateTime(
+            DateTime.Today.Year,
+            DateTime.Today.Month,
+            1);
+
+        dataSelecionada = DateTime.Today;
+    }
+
+    private void SelecionarDia(DateTime data)
+    {
+        dataSelecionada = data;
+    }
+
+    private static bool EhFimDeSemana(DateTime data)
+    {
+        return data.DayOfWeek == DayOfWeek.Saturday
+            || data.DayOfWeek == DayOfWeek.Sunday;
+    }
+
+    private static string ClasseDia(
+        DateTime data,
+        bool selecionado,
+        bool hoje,
+        bool diaUtil)
+    {
+        var classes = new List<string> { "dia" };
+
+        if (selecionado)
+            classes.Add("selecionado");
+
+        if (hoje)
+            classes.Add("hoje");
+
+        if (!diaUtil)
+            classes.Add("fim-semana");
+
+        return string.Join(" ", classes);
+    }
+}
+
+<style>
+    .pagina {
+        min-height: 100vh;
+        background: #f4f7fb;
+        color: #172b4d;
+        font-family: Arial, sans-serif;
+    }
+
+    .topo {
+        min-height: 72px;
+        padding: 0 6%;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        background: white;
+        box-shadow: 0 2px 12px #172b4d0c;
+    }
+
+    .voltar {
+        color: #2563eb;
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+    .logo {
+        color: #0d6efd;
+        font-size: 21px;
+        font-weight: 800;
+    }
+
+    .localizacao {
+        color: #475467;
+        font-size: 14px;
+    }
+
+    .conteudo {
+        max-width: 1100px;
+        margin: auto;
+        padding: 40px 22px;
+    }
+
+    .cabecalho {
+        margin-bottom: 25px;
+    }
+
+    .etiqueta {
+        color: #087f8c;
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 1.4px;
+    }
+
+    .cabecalho h1 {
+        margin: 10px 0;
+        font-size: clamp(28px, 4vw, 38px);
+    }
+
+    .cabecalho p,
+    .secao-titulo p {
+        color: #667085;
+        line-height: 1.7;
+    }
+
+    .aviso {
+        display: flex;
+        gap: 14px;
+        padding: 17px;
+        margin-bottom: 24px;
+        border: 1px solid #cfe2ff;
+        border-radius: 12px;
+        background: #eef6ff;
+        color: #24549a;
+        line-height: 1.6;
+    }
+
+        .aviso p {
+            margin: 5px 0 0;
+            font-size: 14px;
+        }
+
+    .aviso-icone {
+        font-size: 22px;
+    }
+
+    .calendario-card {
+        padding: 26px;
+        background: white;
+        border: 1px solid #e8edf4;
+        border-radius: 18px;
+        box-shadow: 0 8px 28px #172b4d0a;
+    }
+
+    .calendario-topo {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+
+        .calendario-topo h2 {
+            margin: 0 0 6px;
+            text-transform: capitalize;
+            font-size: 24px;
+        }
+
+        .calendario-topo p {
+            margin: 0;
+            color: #667085;
+            font-size: 13px;
+        }
+
+    .navegacao {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-mes,
+    .btn-hoje {
+        min-height: 38px;
+        border: 1px solid #d6deea;
+        border-radius: 8px;
+        background: white;
+        color: #172b4d;
+        cursor: pointer;
+        font-weight: 700;
+    }
+
+    .btn-mes {
+        width: 38px;
+        font-size: 24px;
+    }
+
+    .btn-hoje {
+        padding: 0 14px;
+    }
+
+        .btn-mes:hover,
+        .btn-hoje:hover {
+            background: #eef6ff;
+            border-color: #93baff;
+        }
+
+    .dias-semana,
+    .grade-calendario {
+        display: grid;
+        grid-template-columns: repeat(7, minmax(0, 1fr));
+        gap: 7px;
+    }
+
+    .dias-semana {
+        margin-bottom: 8px;
+    }
+
+        .dias-semana div {
+            padding: 10px 0;
+            color: #667085;
+            font-size: 12px;
+            font-weight: 700;
+            text-align: center;
+        }
+
+    .dia,
+    .dia-vazio {
+        min-height: 76px;
+        border-radius: 10px;
+    }
+
+    .dia {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        border: 1px solid #e8edf4;
+        background: white;
+        color: #172b4d;
+        cursor: pointer;
+        font: inherit;
+        font-weight: 600;
+    }
+
+        .dia:hover {
+            border-color: #0d6efd;
+            background: #f2f7ff;
+        }
+
+        .dia.fim-semana {
+            background: #f8fafc;
+            color: #98a2b3;
+        }
+
+        .dia.hoje {
+            border: 2px solid #0d6efd;
+        }
+
+        .dia.selecionado {
+            background: #0d6efd;
+            border-color: #0d6efd;
+            color: white;
+        }
+
+    .marcador {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #12b886;
+    }
+
+    .dia.selecionado .marcador {
+        background: white;
+    }
+
+    .legenda {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+        margin-top: 20px;
+        color: #667085;
+        font-size: 12px;
+    }
+
+        .legenda span {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+        }
+
+    .ponto {
+        display: inline-block;
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+    }
+
+        .ponto.rotina {
+            background: #12b886;
+        }
+
+        .ponto.hoje {
+            background: #0d6efd;
+        }
+
+        .ponto.escolhido {
+            background: #667085;
+        }
+
+    .detalhe-data {
+        display: flex;
+        gap: 18px;
+        margin-top: 22px;
+        padding: 24px;
+        background: white;
+        border: 1px solid #e8edf4;
+        border-radius: 16px;
+    }
+
+    .detalhe-icone {
+        display: grid;
+        place-items: center;
+        flex-shrink: 0;
+        width: 54px;
+        height: 54px;
+        border-radius: 13px;
+        background: #eaf2ff;
+        font-size: 26px;
+    }
+
+    .detalhe-texto h2 {
+        margin: 8px 0;
+        font-size: 20px;
+        text-transform: capitalize;
+    }
+
+    .detalhe-texto p {
+        margin: 0;
+        color: #667085;
+        line-height: 1.7;
+        font-size: 14px;
+    }
+
+    .secao-vacinas {
+        margin-top: 38px;
+    }
+
+    .secao-titulo h2 {
+        margin: 8px 0;
+        font-size: 26px;
+    }
+
+    .cards {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 18px;
+        margin-top: 22px;
+    }
+
+    .vacina-card {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 22px;
+        border: 1px solid #e8edf4;
+        border-radius: 15px;
+        background: white;
+    }
+
+    .card-icone {
+        display: grid;
+        place-items: center;
+        width: 48px;
+        height: 48px;
+        margin-bottom: 14px;
+        border-radius: 12px;
+        font-size: 24px;
+    }
+
+    .azul {
+        background: #eaf2ff;
+    }
+
+    .verde {
+        background: #e7f8ef;
+    }
+
+    .amarelo {
+        background: #fff5d9;
+    }
+
+    .vacina-card h3 {
+        margin: 0 0 10px;
+        font-size: 17px;
+    }
+
+    .vacina-card p {
+        flex: 1;
+        color: #667085;
+        font-size: 14px;
+        line-height: 1.7;
+    }
+
+    .vacina-card a {
+        margin-top: 12px;
+        color: #0d6efd;
+        font-size: 13px;
+        font-weight: 700;
+        line-height: 1.6;
+        text-decoration: none;
+    }
+
+        .vacina-card a:hover {
+            text-decoration: underline;
+        }
+
+    .rodape-aviso {
+        margin-top: 26px;
+        padding: 20px;
+        border-radius: 12px;
+        background: #fff8e8;
+        color: #7a5410;
+        line-height: 1.7;
+    }
+
+        .rodape-aviso p {
+            margin: 6px 0 0;
+            font-size: 13px;
+        }
+
+    @@media (max-width: 700px) {
+        .topo {
+            flex-wrap: wrap;
+            padding: 16px;
+        }
+
+        .localizacao {
+            width: 100%;
+        }
+
+        .conteudo {
+            padding: 25px 14px;
+        }
+
+        .calendario-card {
+            padding: 15px;
+        }
+
+        .calendario-topo {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+
+        .dia,
+        .dia-vazio {
+            min-height: 48px;
+            border-radius: 7px;
+        }
+
+        .dias-semana,
+        .grade-calendario {
+            gap: 4px;
+        }
+
+        .dia {
+            font-size: 13px;
+        }
+
+        .cards {
+            grid-template-columns: 1fr;
+        }
+
+        .detalhe-data {
+            padding: 18px;
+        }
+
+        .detalhe-texto h2 {
+            font-size: 17px;
+        }
+
+        .legenda {
+            gap: 10px;
+        }
+    }
+</style>

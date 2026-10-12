@@ -1,0 +1,458 @@
+﻿@page "/unidades"
+@rendermode InteractiveServer
+
+@using System.Linq
+
+<PageTitle>Unidades de Saúde | VacinAção</PageTitle>
+
+<div class="pagina">
+    <header class="topo">
+        <a href="/painel" class="voltar">← Voltar ao painel</a>
+        <span class="logo">✚ VacinAção</span>
+    </header>
+
+    <main class="conteudo">
+        <section class="cabecalho">
+            <span class="etiqueta">REDE MUNICIPAL DE SAÚDE</span>
+            <h1>Unidades de Saúde</h1>
+            <p>
+                Encontre as Unidades de Pronto Atendimento
+                de Sorocaba de forma rápida e fácil.
+            </p>
+        </section>
+
+        <section class="pesquisa">
+            <label for="busca">Pesquisar unidade de saúde</label>
+
+            <div class="campo-pesquisa">
+                <span>🔎</span>
+                <input id="busca"
+                       type="search"
+                       placeholder="Digite o nome, região ou endereço..."
+                       @bind="termoBusca"
+                       @bind:event="oninput" />
+            </div>
+
+            <label for="filtro">Filtrar por região</label>
+
+            <select id="filtro" @bind="regiaoSelecionada">
+                <option value="Todas">Todas as regiões</option>
+                <option value="Norte">Zona Norte</option>
+                <option value="Sul">Zona Sul / Oeste</option>
+                <option value="Leste">Zona Leste</option>
+            </select>
+        </section>
+
+        <div class="resumo">
+            <strong>@UnidadesFiltradas.Count()</strong>
+            <span>
+                @(UnidadesFiltradas.Count() == 1
+                    ? "unidade encontrada"
+                    : "unidades encontradas")
+            </span>
+        </div>
+
+        <section class="lista-unidades">
+            @if (!UnidadesFiltradas.Any())
+            {
+                <div class="vazio">
+                    <span>🔍</span>
+                    <h2>Nenhuma unidade encontrada</h2>
+                    <p>
+                        Tente pesquisar por outro nome ou selecionar
+                        uma região diferente.
+                    </p>
+                    <button @onclick="LimparFiltros">
+                        Limpar pesquisa
+                    </button>
+                </div>
+            }
+            else
+            {
+                @foreach (var unidade in UnidadesFiltradas)
+                {
+                    <article class="card-unidade" @key="unidade.Nome">
+                        <div class="card-topo">
+                            <div class="icone">🏥</div>
+                            <span class="badge">UPA 24 horas</span>
+                        </div>
+
+                        <h2>@unidade.Nome</h2>
+
+                        <p class="regiao">
+                            <span>📍</span> @unidade.Regiao
+                        </p>
+
+                        <div class="detalhe">
+                            <span>📌</span>
+                            <p>@unidade.Endereco</p>
+                        </div>
+
+                        <div class="detalhe">
+                            <span>☎️</span>
+                            <p>@unidade.Telefone</p>
+                        </div>
+
+                        <div class="acoes">
+                            <a class="btn-mapa"
+                               href="@($"https://www.google.com/maps/search/?api=1&query={Uri.EscapeDataString(unidade.Endereco + ", Sorocaba, SP")}")"
+                               target="_blank"
+                               rel="noopener noreferrer">
+                                Ver no mapa ↗
+                            </a>
+
+                            <a class="btn-ligar"
+                               href="@($"tel:{unidade.Telefone.Replace(" ", "").Replace("(", "").Replace(")", "").Replace("-", "")}")">
+                                Ligar
+                            </a>
+                        </div>
+                    </article>
+                }
+            }
+        </section>
+
+        <div class="observacao">
+            <strong>Importante:</strong>
+            em uma emergência, procure atendimento imediatamente.
+            Confirme os dados da unidade antes de se deslocar.
+        </div>
+    </main>
+</div>
+
+@code {
+    private string termoBusca = "";
+    private string regiaoSelecionada = "Todas";
+
+    private readonly List<UnidadeSaude> unidades = new()
+    {
+        new UnidadeSaude
+        {
+            Nome = "UPA Zona Norte",
+            Regiao = "Norte",
+            Endereco = "Avenida Itavuvu, 19 - Vila Olímpia",
+            Telefone = "(15) 3219-3190"
+        },
+        new UnidadeSaude
+        {
+            Nome = "UPA Zona Oeste",
+            Regiao = "Sul / Oeste",
+            Endereco = "Avenida General Carneiro, 1670 - Cerrado",
+            Telefone = "(15) 3229-0410"
+        },
+        new UnidadeSaude
+        {
+            Nome = "UPA Zona Leste",
+            Regiao = "Leste",
+            Endereco = "Rua Coronel Nogueira Padilha, 2585 - Vila Hortência",
+            Telefone = "(15) 3333-0100"
+        },
+        new UnidadeSaude
+        {
+            Nome = "UPA Éden",
+            Regiao = "Leste",
+            Endereco = "Rua Miguel José Gimenez, 75 - Éden",
+            Telefone = "(15) 3333-2150"
+        }
+    };
+
+    private IEnumerable<UnidadeSaude> UnidadesFiltradas =>
+        unidades.Where(u =>
+            (string.IsNullOrWhiteSpace(termoBusca) ||
+             $"{u.Nome} {u.Regiao} {u.Endereco} {u.Telefone}"
+                 .Contains(termoBusca.Trim(),
+                     StringComparison.OrdinalIgnoreCase))
+            &&
+            (regiaoSelecionada == "Todas" ||
+             (regiaoSelecionada == "Norte" &&
+              u.Regiao == "Norte") ||
+             (regiaoSelecionada == "Leste" &&
+              u.Regiao == "Leste") ||
+             (regiaoSelecionada == "Sul" &&
+              u.Regiao == "Sul / Oeste"))
+        );
+
+    private void LimparFiltros()
+    {
+        termoBusca = "";
+        regiaoSelecionada = "Todas";
+    }
+
+    private class UnidadeSaude
+    {
+        public string Nome { get; set; } = "";
+        public string Regiao { get; set; } = "";
+        public string Endereco { get; set; } = "";
+        public string Telefone { get; set; } = "";
+    }
+}
+
+<style>
+    .pagina {
+        min-height: 100vh;
+        background: #f4f7fb;
+        font-family: Arial, sans-serif;
+        color: #172b4d;
+    }
+
+    .topo {
+        min-height: 70px;
+        padding: 0 7%;
+        background: white;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        box-shadow: 0 2px 12px #172b4d0c;
+    }
+
+    .voltar {
+        color: #2563eb;
+        text-decoration: none;
+        font-weight: 600;
+    }
+
+    .logo {
+        font-size: 21px;
+        font-weight: 800;
+        color: #0d6efd;
+    }
+
+    .conteudo {
+        max-width: 1100px;
+        margin: auto;
+        padding: 45px 24px;
+    }
+
+    .cabecalho {
+        margin-bottom: 28px;
+    }
+
+    .etiqueta {
+        color: #087f8c;
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 1.5px;
+    }
+
+    .cabecalho h1 {
+        font-size: clamp(30px, 5vw, 40px);
+        margin: 12px 0;
+    }
+
+    .cabecalho p {
+        color: #667085;
+        line-height: 1.7;
+    }
+
+    .pesquisa {
+        background: white;
+        padding: 25px;
+        border-radius: 16px;
+        box-shadow: 0 5px 22px #172b4d0a;
+    }
+
+        .pesquisa label {
+            display: block;
+            margin-bottom: 10px;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+    .campo-pesquisa {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        border: 1px solid #d9e1ec;
+        border-radius: 10px;
+        padding: 0 14px;
+        margin-bottom: 22px;
+    }
+
+        .campo-pesquisa input {
+            width: 100%;
+            min-width: 0;
+            padding: 15px 0;
+            border: none;
+            outline: none;
+            font-size: 15px;
+            background: transparent;
+        }
+
+    .pesquisa select {
+        width: 100%;
+        padding: 13px;
+        border: 1px solid #d9e1ec;
+        border-radius: 10px;
+        background: white;
+        font-size: 15px;
+    }
+
+    .resumo {
+        display: flex;
+        gap: 7px;
+        align-items: center;
+        margin: 28px 0 16px;
+        color: #667085;
+    }
+
+        .resumo strong {
+            color: #0d6efd;
+            font-size: 22px;
+        }
+
+    .lista-unidades {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 20px;
+    }
+
+    .card-unidade {
+        background: white;
+        border: 1px solid #e8edf4;
+        padding: 25px;
+        border-radius: 17px;
+        box-shadow: 0 5px 20px #172b4d08;
+        transition: transform .2s, box-shadow .2s;
+        min-width: 0;
+    }
+
+        .card-unidade:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 28px #172b4d12;
+        }
+
+    .card-topo {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+    }
+
+    .icone {
+        font-size: 35px;
+    }
+
+    .badge {
+        background: #e7f8ef;
+        color: #16834a;
+        padding: 7px 10px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 800;
+        white-space: nowrap;
+    }
+
+    .card-unidade h2 {
+        font-size: 21px;
+        margin: 18px 0 10px;
+    }
+
+    .regiao {
+        color: #0d6efd;
+        font-weight: 700;
+        font-size: 13px;
+    }
+
+    .detalhe {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        margin: 15px 0;
+    }
+
+        .detalhe p {
+            color: #667085;
+            line-height: 1.5;
+            margin: 0;
+            overflow-wrap: anywhere;
+        }
+
+    .acoes {
+        display: flex;
+        gap: 10px;
+        margin-top: 23px;
+    }
+
+        .acoes a {
+            text-align: center;
+            padding: 12px 15px;
+            border-radius: 9px;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+    .btn-mapa {
+        background: #0d6efd;
+        color: white;
+        flex: 1;
+    }
+
+        .btn-mapa:hover {
+            background: #0b5ed7;
+        }
+
+    .btn-ligar {
+        background: #eaf8f0;
+        color: #16834a;
+    }
+
+    .vazio {
+        grid-column: 1 / -1;
+        background: white;
+        padding: 40px 20px;
+        text-align: center;
+        border-radius: 16px;
+    }
+
+        .vazio > span {
+            font-size: 35px;
+        }
+
+        .vazio p {
+            color: #667085;
+            line-height: 1.6;
+        }
+
+        .vazio button {
+            border: none;
+            border-radius: 9px;
+            padding: 12px 18px;
+            background: #0d6efd;
+            color: white;
+            cursor: pointer;
+            font-weight: 700;
+        }
+
+    .observacao {
+        margin-top: 25px;
+        padding: 18px;
+        background: #fff8e7;
+        color: #795b13;
+        border-radius: 12px;
+        line-height: 1.6;
+        font-size: 13px;
+    }
+
+    @@media (max-width: 650px) {
+        .topo {
+            padding: 18px;
+            gap: 15px;
+        }
+
+        .logo {
+            font-size: 17px;
+        }
+
+        .conteudo {
+            padding: 30px 16px;
+        }
+
+        .lista-unidades {
+            grid-template-columns: 1fr;
+        }
+
+        .pesquisa {
+            padding: 18px;
+        }
+    }
+</style>

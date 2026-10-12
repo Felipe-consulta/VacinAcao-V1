@@ -1,0 +1,445 @@
+﻿
+@page "/agendamento"
+@rendermode InteractiveServer
+
+<PageTitle>Agendamento | VacinAção</PageTitle>
+
+<div class="pagina">
+    <header class="topo">
+        <a href="/painel" class="voltar">← Voltar ao painel</a>
+        <span class="logo">✚ VacinAção</span>
+    </header>
+
+    <main class="conteudo">
+        <section class="cabecalho">
+            <span class="etiqueta">CUIDE DA SUA SAÚDE</span>
+            <h1>Agendamento de Vacinação</h1>
+            <p>
+                Escolha a vacina, a unidade, a data e o horário desejados.
+            </p>
+        </section>
+
+        <section class="formulario-container">
+            <div class="formulario-titulo">
+                <div class="icone">🗓️</div>
+                <div>
+                    <h2>Novo agendamento</h2>
+                    <p>Preencha todos os campos obrigatórios.</p>
+                </div>
+            </div>
+
+            <div class="campo">
+                <label for="vacina">Vacina desejada *</label>
+                <select id="vacina" @bind="vacinaSelecionada">
+                    <option value="">Selecione uma vacina</option>
+                    @foreach (var vacina in vacinas)
+                    {
+                        <option value="@vacina">@vacina</option>
+                    }
+                </select>
+            </div>
+
+            <div class="campo">
+                <label for="unidade">Unidade de saúde *</label>
+                <select id="unidade" @bind="unidadeSelecionada">
+                    <option value="">Selecione uma unidade</option>
+                    @foreach (var unidade in unidades)
+                    {
+                        <option value="@unidade">@unidade</option>
+                    }
+                </select>
+            </div>
+
+            <div class="linha">
+                <div class="campo">
+                    <label for="data">Data desejada *</label>
+                    <input id="data"
+                           type="date"
+                           min="@DataMinima"
+                           @bind="dataSelecionada" />
+
+                    <small>Escolha uma data a partir de amanhã.</small>
+                </div>
+
+                <div class="campo">
+                    <label for="horario">Horário desejado *</label>
+                    <select id="horario" @bind="horarioSelecionado">
+                        <option value="">Selecione um horário</option>
+                        @foreach (var horario in horarios)
+                        {
+                            <option value="@horario">@horario</option>
+                        }
+                    </select>
+                </div>
+            </div>
+
+            <div class="informacao">
+                ℹ️ Os horários são opções demonstrativas e precisam ser
+                confirmados pela unidade de saúde. Nem todas as unidades
+                de pronto atendimento oferecem vacinação agendada.
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(mensagemErro))
+            {
+                <div class="mensagem erro" role="alert">
+                    <strong>Não foi possível continuar</strong>
+                    <p>@mensagemErro</p>
+                </div>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(mensagemSucesso))
+            {
+                <div class="mensagem sucesso" role="status">
+                    <h3>✓ Solicitação preparada!</h3>
+                    <p>@mensagemSucesso</p>
+                    <p>
+                        Atenção: os dados ainda não foram salvos no banco
+                        de dados. Esta tela não confirma uma vaga.
+                    </p>
+                </div>
+            }
+
+            <button type="button"
+                    class="btn-confirmar"
+                    @onclick="ConfirmarAgendamento">
+                Solicitar agendamento →
+            </button>
+        </section>
+
+        <p class="rodape">
+            VacinAção · Sua saúde em primeiro lugar
+        </p>
+    </main>
+</div>
+
+@code {
+    private string vacinaSelecionada = "";
+    private string unidadeSelecionada = "";
+    private DateTime? dataSelecionada;
+    private string horarioSelecionado = "";
+
+    private string mensagemErro = "";
+    private string mensagemSucesso = "";
+
+    private string DataMinima =>
+        DateTime.Today.AddDays(1).ToString("yyyy-MM-dd");
+
+    private readonly List<string> vacinas = new()
+    {
+        "COVID-19",
+        "Influenza (gripe)",
+        "Hepatite B",
+        "Febre amarela",
+        "Dupla adulto (dT)",
+        "Tríplice viral",
+        "HPV",
+        "Meningocócica"
+    };
+
+    private readonly List<string> unidades = new()
+    {
+        "UPA Éden",
+        "UPH Zona Norte",
+        "UPH Zona Leste",
+        "UPH Zona Oeste",
+        "PA Parque das Laranjeiras",
+        "PA Jardim São Guilherme",
+        "PA Brigadeiro Tobias",
+        "PA Habiteto",
+        "PA Carandá",
+        "PA São Bento",
+        "PA Sorocaba I",
+        "PA Aparecidinha",
+        "PA Ulysses Guimarães"
+    };
+
+    private readonly List<string> horarios = new()
+    {
+        "08:00",
+        "08:30",
+        "09:00",
+        "09:30",
+        "10:00",
+        "10:30",
+        "11:00",
+        "13:00",
+        "13:30",
+        "14:00",
+        "14:30",
+        "15:00",
+        "15:30",
+        "16:00"
+    };
+
+    private void ConfirmarAgendamento()
+    {
+        mensagemErro = "";
+        mensagemSucesso = "";
+
+        if (string.IsNullOrWhiteSpace(vacinaSelecionada) ||
+            string.IsNullOrWhiteSpace(unidadeSelecionada) ||
+            dataSelecionada is null ||
+            string.IsNullOrWhiteSpace(horarioSelecionado))
+        {
+            mensagemErro =
+                "Preencha todos os campos antes de solicitar o agendamento.";
+            return;
+        }
+
+        if (!vacinas.Contains(vacinaSelecionada) ||
+            !unidades.Contains(unidadeSelecionada) ||
+            !horarios.Contains(horarioSelecionado))
+        {
+            mensagemErro =
+                "Uma das opções selecionadas é inválida. Confira os campos.";
+            return;
+        }
+
+        if (dataSelecionada.Value.Date <= DateTime.Today)
+        {
+            mensagemErro =
+                "Escolha uma data futura, a partir de amanhã.";
+            return;
+        }
+
+        mensagemSucesso =
+            $"Vacina: {vacinaSelecionada}. " +
+            $"Unidade escolhida: {unidadeSelecionada}. " +
+            $"Data: {dataSelecionada.Value:dd/MM/yyyy}. " +
+            $"Horário desejado: {horarioSelecionado}.";
+    }
+}
+
+<style>
+    .pagina {
+        min-height: 100vh;
+        background: #f4f7fb;
+        color: #172b4d;
+        font-family: Arial, sans-serif;
+    }
+
+    .topo {
+        min-height: 70px;
+        padding: 0 7%;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        background: white;
+        box-shadow: 0 2px 12px #172b4d0c;
+    }
+
+    .voltar {
+        color: #2563eb;
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+        .voltar:hover {
+            text-decoration: underline;
+        }
+
+    .logo {
+        color: #0d6efd;
+        font-size: 21px;
+        font-weight: 800;
+    }
+
+    .conteudo {
+        max-width: 850px;
+        margin: 0 auto;
+        padding: 42px 22px;
+    }
+
+    .cabecalho {
+        margin-bottom: 28px;
+    }
+
+    .etiqueta {
+        color: #087f8c;
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 1.5px;
+    }
+
+    .cabecalho h1 {
+        margin: 12px 0;
+        font-size: clamp(28px, 5vw, 38px);
+    }
+
+    .cabecalho p,
+    .formulario-titulo p {
+        color: #667085;
+        line-height: 1.6;
+    }
+
+    .formulario-container {
+        padding: 30px;
+        background: white;
+        border: 1px solid #e8edf4;
+        border-radius: 18px;
+        box-shadow: 0 8px 28px #172b4d0a;
+    }
+
+    .formulario-titulo {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 28px;
+    }
+
+    .icone {
+        display: grid;
+        place-items: center;
+        flex-shrink: 0;
+        width: 58px;
+        height: 58px;
+        border-radius: 14px;
+        background: #eaf2ff;
+        font-size: 29px;
+    }
+
+    .formulario-titulo h2 {
+        margin: 0 0 6px;
+        font-size: 23px;
+    }
+
+    .formulario-titulo p {
+        margin: 0;
+    }
+
+    .campo {
+        min-width: 0;
+        margin-bottom: 22px;
+    }
+
+        .campo label {
+            display: block;
+            margin-bottom: 9px;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .campo input,
+        .campo select {
+            box-sizing: border-box;
+            width: 100%;
+            min-height: 48px;
+            padding: 12px;
+            border: 1px solid #d6deea;
+            border-radius: 9px;
+            background: white;
+            color: #172b4d;
+            font: inherit;
+        }
+
+            .campo input:focus,
+            .campo select:focus {
+                outline: 2px solid #b9d3ff;
+                border-color: #0d6efd;
+            }
+
+        .campo small {
+            display: block;
+            margin-top: 8px;
+            color: #667085;
+            line-height: 1.5;
+        }
+
+    .linha {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 18px;
+    }
+
+    .informacao {
+        margin: 5px 0 24px;
+        padding: 15px;
+        border-radius: 10px;
+        background: #eef6ff;
+        color: #24549a;
+        font-size: 13px;
+        line-height: 1.6;
+    }
+
+    .btn-confirmar {
+        width: 100%;
+        padding: 15px;
+        border: 0;
+        border-radius: 10px;
+        background: #0d6efd;
+        color: white;
+        font-size: 15px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: background 0.2s, transform 0.2s;
+    }
+
+        .btn-confirmar:hover {
+            background: #0b5ed7;
+            transform: translateY(-1px);
+        }
+
+        .btn-confirmar:focus-visible {
+            outline: 3px solid #9cc2ff;
+            outline-offset: 3px;
+        }
+
+    .mensagem {
+        margin-bottom: 20px;
+        padding: 16px;
+        border-radius: 10px;
+        line-height: 1.6;
+    }
+
+        .mensagem h3 {
+            margin: 0 0 8px;
+        }
+
+        .mensagem p {
+            margin: 8px 0 0;
+        }
+
+    .erro {
+        background: #fff0f0;
+        color: #b42318;
+        border: 1px solid #fecdca;
+    }
+
+    .sucesso {
+        background: #eaf8f0;
+        color: #176b40;
+        border: 1px solid #abefc6;
+    }
+
+    .rodape {
+        padding: 24px 0;
+        color: #667085;
+        font-size: 13px;
+        text-align: center;
+    }
+
+    @@media (max-width: 600px) {
+        .topo {
+            padding: 18px;
+            gap: 12px;
+        }
+
+        .logo {
+            font-size: 17px;
+        }
+
+        .conteudo {
+            padding: 28px 15px;
+        }
+
+        .formulario-container {
+            padding: 20px;
+        }
+
+        .linha {
+            grid-template-columns: 1fr;
+            gap: 0;
+        }
+    }
+</style>

@@ -1,0 +1,60 @@
+﻿
+@page "/historico"
+@rendermode InteractiveServer
+
+<PageTitle>Histórico Vacinal | VacinAção</PageTitle>
+
+<div class="pagina">
+    <a href="/painel" class="voltar">← Voltar ao painel</a>
+    <div class="cartao">
+        <div class="icone">💉</div>
+        <h1>Histórico Vacinal</h1>
+        <p>Consulte as vacinas já aplicadas e acompanhe seu histórico de vacinação.</p>
+        <div class="aviso">Seu histórico de vacinas aparecerá aqui.</div>
+    </div>
+</div>
+
+<style>
+    .pagina {
+        min-height: 100vh;
+        background: #f5f8fc;
+        padding: 35px;
+        font-family: Arial, sans-serif;
+    }
+
+    .voltar {
+        color: #0d6efd;
+        text-decoration: none;
+        font-weight: bold;
+    }
+
+    .cartao {
+        max-width: 800px;
+        margin: 35px auto;
+        background: white;
+        padding: 40px;
+        border-radius: 18px;
+        box-shadow: 0 5px 25px #0000000d;
+    }
+
+    .icone {
+        font-size: 42px;
+    }
+
+    h1 {
+        color: #17365d;
+    }
+
+    p {
+        color: #667085;
+        line-height: 1.7;
+    }
+
+    .aviso {
+        margin-top: 25px;
+        padding: 20px;
+        background: #eef6ff;
+        border-radius: 10px;
+        color: #175cd3;
+    }
+</style>
